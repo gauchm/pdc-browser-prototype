@@ -139,6 +139,15 @@ function getBoundingBox(dataset) {
     }
 }
 
+function formatRole(role) {
+    if (role === 'principalInvestigator') {
+        return 'Principal Investigator';
+    } else if (role === 'pointOfContact') {
+        return 'Point of Contact';
+    }
+    return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
 function parseMetadata(dataset){
     let metadata = cleanMetadata(dataset)["gmd:MD_Metadata"];
     var file_id = metadata["gmd:fileIdentifier"];
@@ -156,7 +165,7 @@ function parseMetadata(dataset){
     var email = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:electronicMailAddress"];
     var phone = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:phone"]["gmd:CI_Telephone"]["gmd:voice"];
     var website = metadata["gmd:identificationInfo"]["gmd:MD_DataIdentification"]["gmd:pointOfContact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:onlineResource"]["gmd:CI_OnlineResource"]["gmd:linkage"]["gmd:URL"];
-    var role = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:role"]["gmd:CI_RoleCode"];
+    var role = formatRole(metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:role"]["gmd:CI_RoleCode"]);
     var dateStamp = metadata["gmd:dateStamp"];
     var standardName = metadata["gmd:metadataStandardName"];
     var standardVersion = metadata["gmd:metadataStandardVersion"];
@@ -224,13 +233,10 @@ function parseMetadata(dataset){
     $('#meta-title').html(title);
     var responsiblePartiesString = "";
     for (let i = 0; i < responsibleParties.length; i++) {
-        role = responsibleParties[i]["gmd:CI_ResponsibleParty"]["gmd:role"]["gmd:CI_RoleCode"];
-        if ( role === 'principalInvestigator' )
-            role = 'Principal Investigator';
         responsiblePartiesString += responsibleParties[i]["gmd:CI_ResponsibleParty"]["gmd:individualName"] + " (" + 
-                                    role + ")<br/>";
+                                    formatRole(responsibleParties[i]["gmd:CI_ResponsibleParty"]["gmd:role"]["gmd:CI_RoleCode"]) + ")<br/>";
     }
-    $('#meta-responsibleParties').html(responsiblePartiesString.substring(0, responsiblePartiesString.length - 1));
+    $('#meta-responsibleParties').html(responsiblePartiesString.substring(0, responsiblePartiesString.length - 5));
     $('#meta-recommendedCitation').html(recommendedCitation);
     $('#meta-purpose').html(purpose);
     $('#meta-abstr').html(abstr);
