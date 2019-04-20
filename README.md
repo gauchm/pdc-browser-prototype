@@ -1,3 +1,3 @@
-# Simple PDC Browser Prototype 
+# Waterloo Metadata Index
 
-Data from https://www.polardata.ca/pdcsearch/
+Metadata records from the [Polar Data Catalogue](https://www.polardata.ca/pdcsearch/).

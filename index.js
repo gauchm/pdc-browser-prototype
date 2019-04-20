@@ -1,5 +1,5 @@
 
-var map = L.map('mapid').setView([63, -105], 3);
+var map = L.map('mapid').setView([53, -95], 3.5);
 var currentMetadata = null;
 var markers = [];
 
@@ -224,8 +224,11 @@ function parseMetadata(dataset){
     $('#meta-title').html(title);
     var responsiblePartiesString = "";
     for (let i = 0; i < responsibleParties.length; i++) {
-        responsiblePartiesString += responsibleParties[i]["gmd:CI_ResponsibleParty"]["gmd:individualName"] + ", " + 
-                                    responsibleParties[i]["gmd:CI_ResponsibleParty"]["gmd:role"]["gmd:CI_RoleCode"] + "<br/>"
+        role = responsibleParties[i]["gmd:CI_ResponsibleParty"]["gmd:role"]["gmd:CI_RoleCode"];
+        if ( role === 'principalInvestigator' )
+            role = 'Principal Investigator';
+        responsiblePartiesString += responsibleParties[i]["gmd:CI_ResponsibleParty"]["gmd:individualName"] + " (" + 
+                                    role + ")<br/>";
     }
     $('#meta-responsibleParties').html(responsiblePartiesString.substring(0, responsiblePartiesString.length - 1));
     $('#meta-recommendedCitation').html(recommendedCitation);

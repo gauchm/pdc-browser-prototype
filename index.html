@@ -9,11 +9,11 @@
         <link rel="stylesheet" href="style.css">
 
         <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
-        <title>Polar Data Catalogue</title>
+        <title>Waterloo Metadata Index</title>
     </head>
     <body>
         <header class="navbar navbar-expand navbar-dark bg-info flex-column flex-md-row" id="header">
-            <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Polar Data Catalogue</a>
+            <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Waterloo Metadata Index</a>
         </header>
         <div class="container-fluid">
             <div class="row flex-xl-nowrap">
@@ -34,25 +34,102 @@
                             <h5 id="meta-sidebar-title" class="pb-4"></h5>
                             <table class="table">
                                 <tbody>
+                                    <!--tr>
+                                        <td>Title</td>
+                                        <td id="meta-title"> </td>
+                                    </tr-->
                                     <tr>
-                                        <td>File Id</td>
-                                        <td id="meta-file_id"></td>
+                                        <td>Responsible Parties</td>
+                                        <td id="meta-responsibleParties"> </td>
                                     </tr>
                                     <tr>
-                                        <td>Language</td>
-                                        <td id="meta-language"> </td>
+                                        <td>Recommended Citation</td>
+                                        <td id="meta-recommendedCitation"> </td>
                                     </tr>
                                     <tr>
-                                        <td>Character Set</td>
-                                        <td id="meta-charset"> </td>
+                                        <td>Purpose</td>
+                                        <td id="meta-purpose"> </td>
                                     </tr>
                                     <tr>
-                                        <td>Hierarchy Level</td>
-                                        <td id="meta-hierarchyLevel"> </td>
+                                        <td>Abstract</td>
+                                        <td id="meta-abstr"> </td>
                                     </tr>
                                     <tr>
-                                        <th scope="col">Contact</th>
-                                        <th scope="col"> </th>
+                                        <td>Supplemental Information</td>
+                                        <td id="meta-supplInfo"> </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Topic Category</td>
+                                        <td id="meta-topicCategory"> </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Status</td>
+                                        <td id="meta-status"> </td>
+                                    </tr>
+
+                                    <!-- heading -->
+                                    <tr>
+                                        <th colspan="2" scope="col">Descriptive Keywords</th>
+                                    </tr>
+                                    <tr>
+                                        <td>Keywords</td>
+                                        <td id="meta-keywords"> </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Thesaurus Name</td>
+                                        <td id="meta-thesaurusName"> </td>
+                                    </tr>
+
+                                    <!-- heading -->
+                                    <tr>
+                                        <th colspan="2" scope="col">Metadata Constraints</th>
+                                    </tr>                                    
+                                    <tr>
+                                        <td>Use Constraints</td>
+                                        <td id="meta-useConstraints"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Access Constraints</td>
+                                        <td id="meta-accessConstraints"> </td>
+                                    </tr>
+
+                                    <!-- heading -->
+                                    <tr>
+                                        <th colspan="2" scope="col">Geographic Bounding Box</th>
+                                    </tr>
+                                    <tr>
+                                        <td>West Bound Longitude</td>
+                                        <td id="meta-westLon"> </td>
+                                    </tr>
+                                    <tr>
+                                        <td>East Bound Longitude</td>
+                                        <td id="meta-eastLon"> </td>
+                                    </tr>
+                                    <tr>
+                                        <td>North Bound Latitude</td>
+                                        <td id="meta-northLat"> </td>
+                                    </tr>
+                                    <tr>
+                                        <td>South Bound Latitude</td>
+                                        <td id="meta-southLat"> </td>
+                                    </tr>
+
+                                    <!-- heading -->
+                                    <tr>
+                                        <th colspan="2" scope="col">Bounding Temporal Extent</th>
+                                    </tr>
+                                    <tr>
+                                        <td>Begin Date</td>
+                                        <td id="meta-beginDate"> </td>
+                                    </tr>
+                                    <tr>
+                                        <td>End Date</td>
+                                        <td id="meta-endDate"> </td>
+                                    </tr>
+
+                                    <!-- heading -->
+                                    <tr>
+                                        <th colspan="2" scope="col">Contact</th>
                                     </tr>
                                     <tr>
                                         <td>Contact Person</td>
@@ -114,101 +191,10 @@
                                         <td>Dataset URI</td>
                                         <td id="meta-datasetURI"> </td>
                                     </tr>
+
+                                    <!-- heading -->
                                     <tr>
-                                        <th scope="col"> Identification Information</th>
-                                        <th scope="col"> </th>
-                                    </tr>
-                                    <tr>
-                                        <td>Title</td>
-                                        <td id="meta-title"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Responsible Parties</td>
-                                        <td id="meta-responsibleParties"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Recommended Citation</td>
-                                        <td id="meta-recommendedCitation"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Purpose</td>
-                                        <td id="meta-purpose"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Abstract</td>
-                                        <td id="meta-abstr"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Supplemental Information</td>
-                                        <td id="meta-supplInfo"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Topic Category</td>
-                                        <td id="meta-topicCategory"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Status</td>
-                                        <td id="meta-status"> </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="col">Descriptive Keywords</th>
-                                        <th scope="col"></th>
-                                    </tr>
-                                    <tr>
-                                        <td>Keywords</td>
-                                        <td id="meta-keywords"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Thesaurus Name</td>
-                                        <td id="meta-thesaurusName"> </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="col">Metadata Constraints</th>
-                                        <th scope="col"></th>
-                                    </tr>                                    
-                                    <tr>
-                                        <td>Use Constraints</td>
-                                        <td id="meta-useConstraints"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Access Constraints</td>
-                                        <td id="meta-accessConstraints"> </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="col">Geographic Bounding Box</th>
-                                        <th scope="col"></th>
-                                    </tr>
-                                    <tr>
-                                        <td>West Bound Longitude</td>
-                                        <td id="meta-westLon"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>East Bound Longitude</td>
-                                        <td id="meta-eastLon"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>North Bound Latitude</td>
-                                        <td id="meta-northLat"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>South Bound Latitude</td>
-                                        <td id="meta-southLat"> </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="col">Bounding Temporal Extent</th>
-                                        <th scope="col"></th>
-                                    </tr>
-                                    <tr>
-                                        <td>Begin Date</td>
-                                        <td id="meta-beginDate"> </td>
-                                    </tr>
-                                    <tr>
-                                        <td>End Date</td>
-                                        <td id="meta-endDate"> </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="col">Distribution Information</th>
-                                        <th scope="col"></th>
+                                        <th colspan="2" scope="col">Distribution Information</th>
                                     </tr>
                                     <tr>
                                         <td>Contact Organisation</td>
@@ -253,6 +239,27 @@
                                     <tr>
                                         <td>Maintenance Frequency</td>
                                         <td id="meta-maintenanceFreq"> </td>
+                                    </tr>
+
+                                    <!-- heading -->
+                                    <tr>
+                                        <th colspan="2" scope="col">Other</th>
+                                    </tr>
+                                    <tr>
+                                        <td>File Id</td>
+                                        <td id="meta-file_id"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Language</td>
+                                        <td id="meta-language"> </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Character Set</td>
+                                        <td id="meta-charset"> </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Hierarchy Level</td>
+                                        <td id="meta-hierarchyLevel"> </td>
                                     </tr>
                                 </tbody>
                             </table>
