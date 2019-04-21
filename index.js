@@ -44,13 +44,13 @@ for (let i = 0; i < datasets.length; i++) {
     var card =  `<div class="card" id="dataset-${i}">` +
                     `<div class="card-header" id="heading-${i}">` +
                         '<h6 class="mb-0">' + 
-                            `<a class="collapsed text-left stretched-link" type="button" data-target="#collapse-${i}" aria-expanded="false" aria-controls="collapse-${i}" onclick="toggleMetadata(${i}, false);">` +
+                            `<a class="collapsed text-left stretched-link" data-target="#collapse-${i}" aria-expanded="false" aria-controls="collapse-${i}" onclick="toggleMetadata(${i}, false);">` +
                                 `${title}` + 
                             '</a>' +
                         '</h6>' +
                         '<div class="row justify-content-end">' +
-                            `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="display: none; z-index: 2000;">Show Bounds</button>` +
-                            `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="z-index: 2000;">Hide Bounds</button>` +                        
+                            `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="display: none; z-index: 2000; font-size: 50%;">[Show Bounds]</button>` +
+                            `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="z-index: 2000; font-size: 50%;">[Hide Bounds]</button>` +                        
                         '</div>' +
                     '</div>' +
                     `<div id="collapse-${i}" class="collapse" aria-labelledby="heading-${i}" data-parent="#datasetList">` +
