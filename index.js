@@ -49,8 +49,8 @@ for (let i = 0; i < datasets.length; i++) {
                             '</a>' +
                         '</h6>' +
                         '<div class="row justify-content-end">' +
-                            `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="display: none; z-index: 2000; font-size: 50%;">[Show Bounds]</button>` +
-                            `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="z-index: 2000; font-size: 50%;">[Hide Bounds]</button>` +                        
+                            `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="display: none; z-index: 2000; font-size: 75%;">[Show Bounds]</button>` +
+                            `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="z-index: 2000; font-size: 75%;">[Hide Bounds]</button>` +
                         '</div>' +
                     '</div>' +
                     `<div id="collapse-${i}" class="collapse" aria-labelledby="heading-${i}" data-parent="#datasetList">` +
