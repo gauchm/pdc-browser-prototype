@@ -2,6 +2,12 @@ html, body {
   height: 100%;
 }
 
+.bg-primary {
+    background-color: #17a2b8 !important;
+}
+
+.material-icons { color: gray; }
+
 .map-wrapper {
     height: inherit;
 }
@@ -41,7 +47,7 @@ html, body {
 .sidebar-sticky {
   position: relative;
   top: 0;
-  height: calc(100vh - 56.5px);
+  height: calc(100vh - 62px);
   padding-top: .5rem;
   overflow-x: hidden;
   overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
@@ -75,5 +81,5 @@ html, body {
 }
 
 #mapid { 
-    height: calc(100vh - 56.5px);
+    height: calc(100vh - 62px);
  }

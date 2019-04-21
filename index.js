@@ -71,18 +71,16 @@ for (let i = 0; i < datasets.length; i++) {
     });
     
     var card =  `<div class="card" id="dataset-${i}">` +
-                    `<div class="row card-header" id="heading-${i}">` +
-                        '<h6 class="col mb-0">' + 
-                            `<a class="collapsed text-left stretched-link" data-target="#collapse-${i}" aria-expanded="false" aria-controls="collapse-${i}" onclick="toggleMetadata(${i}, false);">` +
+                    `<div class="row card-header m-0 p-0" id="heading-${i}" >` +
+                            `<a class="h6 col m-0 p-3 collapsed text-left stretched-link" data-target="#collapse-${i}" aria-expanded="false" aria-controls="collapse-${i}" onclick="toggleMetadata(${i}, false);">` +
                                 `${title}` + 
                             '</a>' +
-                        '</h6>' +
-                        '<div class="justify-content-end">' +
+                        '<div class="m-2">' +
                             `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="display: none; z-index: 2000;">` +
-                                '<img src="images/location_on.svg">' +
+                                '<i class="material-icons">location_on</i>' +
                             `</button>` +
                             `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="z-index: 2000;">` +
-                                '<img src="images/location_off.svg">' +
+                                '<i class="material-icons">location_off</i>' +
                             `</button>` +
                         '</div>' +
                     '</div>' +
