@@ -70,36 +70,81 @@ function hashChanged() {
 window.addEventListener("hashchange", hashChanged, false);
 $(document).ready(hashChanged);
 
+const MAX_BOUNDING_BOX_AREA = 64800; // This is the area of the entire map.
+
 for (let i = 0; i < datasets.length; i++) { 
+    
     var dataset = datasets[i];
     var title = getTitle(dataset);
     var datasetId = dataset["gmd:MD_Metadata"]["gmd:fileIdentifier"]["gco:CharacterString"];
     
+    var marker = null;
     var bounding_box = getBoundingBox(dataset);
     if (bounding_box.length == 2) {
-        markers.push(L.marker(bounding_box).addTo(map));
+        marker = L.marker(bounding_box).addTo(map);
     } else {
-        markers.push(L.polygon(bounding_box).addTo(map));
+        
+        // Calculate the area of the bounding box.
+
+        let bounding_box_length = null;
+        let bounding_box_height = null;
+
+        let p0 = bounding_box[0];
+        for (let j = 1; j < bounding_box.length; j ++) {
+            let pj = bounding_box[j];
+            if (pj[0] == p0[0]) {
+                bounding_box_height = Math.abs(pj[1] - p0[1]);
+            }
+            else if (pj[1] == p0[1]) {
+                bounding_box_length = Math.abs(pj[0] - p0[0]);
+            }
+        }
+
+        let bounding_box_area = bounding_box_length * bounding_box_height;
+
+        if (bounding_box_area / MAX_BOUNDING_BOX_AREA < 1) {
+            marker = L.polygon(bounding_box).addTo(map);
+        }
+
     }
-    markers[i].on('click', function(e) {
-        toggleMetadata(i, true);
-        window.location.hash = "#" + datasets[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"];
-    });
+
+    var button_div = null;
+    if (marker !== null) {
+        
+        marker.on('click', function(e) {
+            toggleMetadata(i, true);
+            window.location.hash = "#" + datasets[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"];
+        });
+        markers.push(marker);
+
+        let m = markers.length - 1;
     
+        button_div =   '<div class="m-2">' +
+                                `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${m});" style="display: none; z-index: 2000;">` +
+                                    `<i class="material-icons"> location_on </i>` +
+                                `</button>` +
+                                `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${m});" style="z-index: 2000;">` +
+                                    `<i class="material-icons"> location_off </i>` +
+                                `</button>` +
+                            '</div>'
+    
+    } else {
+
+        button_div =   '<div class="m-2">' +
+                                `<button id="hideBounds-${i}" class="btn btn-link" style="z-index: 2000;">` +
+                                    `<i class="material-icons"> language </i>` +
+                                `</button>` +
+                            '</div>'
+
+    }
+                        
     var card =  `<div id="${datasetId}">` +
                     `<div class="card" id="dataset-${i}">` +
                         `<div class="row card-header m-0 p-0" id="heading-${i}" >` +
                             `<a href="#${datasetId}" class="h6 col m-0 p-3 collapsed text-left stretched-link" data-target="#collapse-${i}" aria-expanded="false" aria-controls="collapse-${i}" onclick="toggleMetadata(${i}, false);" style="text-decoration: none">` +
                                 `${title}` + 
                             '</a>' +
-                            '<div class="m-2">' +
-                                `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="display: none; z-index: 2000;">` +
-                                    '<i class="material-icons">location_on</i>' +
-                                `</button>` +
-                                `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="z-index: 2000;">` +
-                                    '<i class="material-icons">location_off</i>' +
-                                `</button>` +
-                            '</div>' +
+                            button_div + 
                         '</div>' +
                         `<div id="collapse-${i}" class="collapse" aria-labelledby="heading-${i}" data-parent="#datasetList">` +
                           '<div class="card-body">' +
@@ -113,7 +158,7 @@ for (let i = 0; i < datasets.length; i++) {
 }
 
 function allBoundsOff() {
-    for (let i = 0; i < datasets.length; i++) { 
+    for (let i = 0; i < markers.length; i++) { 
         if (map.hasLayer(markers[i])) {
             map.removeLayer(markers[i]);
             $('#showBounds-' + i).show();
@@ -123,7 +168,7 @@ function allBoundsOff() {
 }
 
 function allBoundsOn() {
-    for (let i = 0; i < datasets.length; i++) { 
+    for (let i = 0; i < markers.length; i++) { 
         if (!map.hasLayer(markers[i])) {
             map.addLayer(markers[i]);
             $('#showBounds-' + i).hide();
