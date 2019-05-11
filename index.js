@@ -174,20 +174,20 @@ marker_size_and_index_pairs.sort(function(a, b) {
 var markers_sorted_by_bounding_box_area = Array(markers.length);
 var datasets_sorted_by_bounding_box_area = Array(markers.length);
 for (let i = 0; i < markers.length; i ++) {
+
     let marker_size_and_index_pair = marker_size_and_index_pairs[i];
     let marker_index = marker_size_and_index_pair[1];
+
     markers_sorted_by_bounding_box_area[i] = markers[marker_index];
     datasets_sorted_by_bounding_box_area[i] = datasets[marker_index];
+    
 }
-
-markers = markers_sorted_by_bounding_box_area;
-datasets = datasets_sorted_by_bounding_box_area;
 
 for (let i = 0; i < markers.length; i ++) {
 
-    markers[i].on('click', function(e) {
+    markers_sorted_by_bounding_box_area[i].on('click', function(e) {
         toggleMetadata(i, true);
-        window.location.hash = "#" + datasets[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"];
+        window.location.hash = "#" + datasets_sorted_by_bounding_box_area[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"];
     });
 
 }
@@ -195,9 +195,9 @@ for (let i = 0; i < markers.length; i ++) {
 allBoundsOn();
 
 function allBoundsOff() {
-    for (let i = 0; i < markers.length; i++) { 
-        if (map.hasLayer(markers[i])) {
-            map.removeLayer(markers[i]);
+    for (let i = 0; i < markers_sorted_by_bounding_box_area.length; i++) { 
+        if (map.hasLayer(markers_sorted_by_bounding_box_area[i])) {
+            map.removeLayer(markers_sorted_by_bounding_box_area[i]);
             $('#showBounds-' + i).show();
             $('#hideBounds-' + i).hide();
         }
@@ -205,8 +205,8 @@ function allBoundsOff() {
 }
 
 function allBoundsOn() {
-    for (let i = 0; i <  markers.length; i++) { 
-        map.addLayer(markers[i]);
+    for (let i = 0; i <  markers_sorted_by_bounding_box_area.length; i++) { 
+        map.addLayer(markers_sorted_by_bounding_box_area[i]);
         $('#showBounds-' + i).hide();
         $('#hideBounds-' + i).show();
     }
@@ -214,15 +214,15 @@ function allBoundsOn() {
 
 function toggleBounds(i) {
 
-    if (map.hasLayer(markers[i])) {
-        map.removeLayer(markers[i]);
+    if (map.hasLayer(markers_sorted_by_bounding_box_area[i])) {
+        map.removeLayer(markers_sorted_by_bounding_box_area[i]);
         $('#showBounds-' + i).show();
         $('#hideBounds-' + i).hide();
     } else {
-        for (let j = 0; j < markers.length; j ++) {
-            if (j == i || map.hasLayer(markers[j])) {
-                map.removeLayer(markers[j]);
-                map.addLayer(markers[j]);
+        for (let j = 0; j < markers_sorted_by_bounding_box_area.length; j ++) {
+            if (j == i || map.hasLayer(markers_sorted_by_bounding_box_area[j])) {
+                map.removeLayer(markers_sorted_by_bounding_box_area[j]);
+                map.addLayer(markers_sorted_by_bounding_box_area[j]);
                 $('#showBounds-' + j).hide();
                 $('#hideBounds-' + j).show();
             }
@@ -238,7 +238,7 @@ function toggleMetadata(selectedMetadata, scroll_to) {
     }
     closeMetadata();
     currentMetadata = selectedMetadata;
-    var dataset = datasets[selectedMetadata];
+    var dataset = datasets_sorted_by_bounding_box_area[selectedMetadata];
     
     // Open selected accordion card
     $('#collapse-' + selectedMetadata).removeClass('collapse');
@@ -255,18 +255,18 @@ function toggleMetadata(selectedMetadata, scroll_to) {
     $('#dataset-' + selectedMetadata).addClass('border-primary');
     
     // Remove other markers
-    for (let i = 0; i < markers.length; i++) {
-        if (i != selectedMetadata && map.hasLayer(markers[i])) {
-            map.removeLayer(markers[i]);
+    for (let i = 0; i < markers_sorted_by_bounding_box_area.length; i++) {
+        if (i != selectedMetadata && map.hasLayer(markers_sorted_by_bounding_box_area[i])) {
+            map.removeLayer(markers_sorted_by_bounding_box_area[i]);
             $('#showBounds-' + i).show();
             $('#hideBounds-' + i).hide();
         }
     }
     
-    if (markers[selectedMetadata].getCenter) {
-        map.flyToBounds(markers[selectedMetadata].getBounds().pad(Math.sqrt(2) / 2), {animate: true, duration: 0.5});  // Polygon
+    if (markers_sorted_by_bounding_box_area[selectedMetadata].getCenter) {
+        map.flyToBounds(markers_sorted_by_bounding_box_area[selectedMetadata].getBounds().pad(Math.sqrt(2) / 2), {animate: true, duration: 0.5});  // Polygon
     } else {
-        map.panTo(markers[selectedMetadata].getLatLng());  // Marker
+        map.panTo(markers_sorted_by_bounding_box_area[selectedMetadata].getLatLng());  // Marker
     }
     
 }
@@ -278,9 +278,9 @@ function closeMetadata() {
         $('#dataset-' + currentMetadata).removeClass('border-primary');
         
         // Add back markers
-        for (let i = 0; i < markers.length; i++) {
-            if (i != currentMetadata && !map.hasLayer(markers[i])) {
-                map.addLayer(markers[i]);                
+        for (let i = 0; i < markers_sorted_by_bounding_box_area.length; i++) {
+            if (i != currentMetadata && !map.hasLayer(markers_sorted_by_bounding_box_area[i])) {
+                map.addLayer(markers_sorted_by_bounding_box_area[i]);                
                 $('#showBounds-' + i).hide();
                 $('#hideBounds-' + i).show();
             }
