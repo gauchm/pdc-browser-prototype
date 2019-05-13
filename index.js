@@ -72,7 +72,6 @@ $(document).ready(hashChanged);
 
 const MAX_BOUNDING_BOX_AREA = 64800; // This is the area of the entire map.
 
-var marker_size_and_index_pairs = []
 for (let i = 0; i < datasets.length; i++) { 
     
     var dataset = datasets[i];
@@ -81,10 +80,8 @@ for (let i = 0; i < datasets.length; i++) {
     
     var marker = null;
     var bounding_box = getBoundingBox(dataset);
-    var bounding_box_area = 0;
-
     if (bounding_box.length == 2) {
-        marker = L.marker(bounding_box)
+        marker = L.marker(bounding_box).addTo(map);
     } else {
         
         // Calculate the area of the bounding box.
@@ -103,10 +100,10 @@ for (let i = 0; i < datasets.length; i++) {
             }
         }
 
-        bounding_box_area = bounding_box_length * bounding_box_height;
+        let bounding_box_area = bounding_box_length * bounding_box_height;
 
         if (bounding_box_area / MAX_BOUNDING_BOX_AREA < 1) {
-            marker = L.polygon(bounding_box)
+            marker = L.polygon(bounding_box).addTo(map);
         }
 
     }
@@ -114,16 +111,19 @@ for (let i = 0; i < datasets.length; i++) {
     var button_div = null;
     if (marker !== null) {
         
-        let markers_length = markers.length;
-
+        marker.on('click', function(e) {
+            toggleMetadata(i, true);
+            window.location.hash = "#" + datasets[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"];
+        });
         markers.push(marker);
-        marker_size_and_index_pairs.push([bounding_box_area, markers_length]);
+
+        let m = markers.length - 1;
     
         button_div =   '<div class="m-2">' +
-                                `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${markers_length});" style="display: none; z-index: 2000;">` +
+                                `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${m});" style="display: none; z-index: 2000;">` +
                                     `<i class="material-icons"> location_on </i>` +
                                 `</button>` +
-                                `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${markers_length});" style="z-index: 2000;">` +
+                                `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${m});" style="z-index: 2000;">` +
                                     `<i class="material-icons"> location_off </i>` +
                                 `</button>` +
                             '</div>'
@@ -157,47 +157,10 @@ for (let i = 0; i < datasets.length; i++) {
     $('#datasetList #metadataTable-' + i).load('datasetMetadata.html', function() { populateMetadataTable(i); });
 }
 
-marker_size_and_index_pairs.sort(function(a, b) {
-
-    if (a[0] < b[0]) {
-        return +1;
-    }
-    else if (a[0] > b[0]) {
-        return -1;
-    }
-    else {
-        return 0;
-    }
-
-});
-
-var markers_sorted_by_bounding_box_area = Array(markers.length);
-var datasets_sorted_by_bounding_box_area = Array(markers.length);
-for (let i = 0; i < markers.length; i ++) {
-
-    let marker_size_and_index_pair = marker_size_and_index_pairs[i];
-    let marker_index = marker_size_and_index_pair[1];
-
-    markers_sorted_by_bounding_box_area[i] = markers[marker_index];
-    datasets_sorted_by_bounding_box_area[i] = datasets[marker_index];
-    
-}
-
-for (let i = 0; i < markers.length; i ++) {
-
-    markers_sorted_by_bounding_box_area[i].on('click', function(e) {
-        toggleMetadata(i, true);
-        window.location.hash = "#" + datasets_sorted_by_bounding_box_area[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"];
-    });
-
-}
-
-allBoundsOn();
-
 function allBoundsOff() {
-    for (let i = 0; i < markers_sorted_by_bounding_box_area.length; i++) { 
-        if (map.hasLayer(markers_sorted_by_bounding_box_area[i])) {
-            map.removeLayer(markers_sorted_by_bounding_box_area[i]);
+    for (let i = 0; i < markers.length; i++) { 
+        if (map.hasLayer(markers[i])) {
+            map.removeLayer(markers[i]);
             $('#showBounds-' + i).show();
             $('#hideBounds-' + i).hide();
         }
@@ -205,28 +168,24 @@ function allBoundsOff() {
 }
 
 function allBoundsOn() {
-    for (let i = 0; i <  markers_sorted_by_bounding_box_area.length; i++) { 
-        map.addLayer(markers_sorted_by_bounding_box_area[i]);
-        $('#showBounds-' + i).hide();
-        $('#hideBounds-' + i).show();
+    for (let i = 0; i < markers.length; i++) { 
+        if (!map.hasLayer(markers[i])) {
+            map.addLayer(markers[i]);
+            $('#showBounds-' + i).hide();
+            $('#hideBounds-' + i).show();
+        }
     }
 }
 
 function toggleBounds(i) {
-
-    if (map.hasLayer(markers_sorted_by_bounding_box_area[i])) {
-        map.removeLayer(markers_sorted_by_bounding_box_area[i]);
+    if (map.hasLayer(markers[i])) {
+        map.removeLayer(markers[i]);
         $('#showBounds-' + i).show();
         $('#hideBounds-' + i).hide();
     } else {
-        for (let j = 0; j < markers_sorted_by_bounding_box_area.length; j ++) {
-            if (j == i || map.hasLayer(markers_sorted_by_bounding_box_area[j])) {
-                map.removeLayer(markers_sorted_by_bounding_box_area[j]);
-                map.addLayer(markers_sorted_by_bounding_box_area[j]);
-                $('#showBounds-' + j).hide();
-                $('#hideBounds-' + j).show();
-            }
-        }
+        map.addLayer(markers[i]);
+        $('#showBounds-' + i).hide();
+        $('#hideBounds-' + i).show();
     }
     
 }
@@ -238,7 +197,7 @@ function toggleMetadata(selectedMetadata, scroll_to) {
     }
     closeMetadata();
     currentMetadata = selectedMetadata;
-    var dataset = datasets_sorted_by_bounding_box_area[selectedMetadata];
+    var dataset = datasets[selectedMetadata];
     
     // Open selected accordion card
     $('#collapse-' + selectedMetadata).removeClass('collapse');
@@ -255,18 +214,18 @@ function toggleMetadata(selectedMetadata, scroll_to) {
     $('#dataset-' + selectedMetadata).addClass('border-primary');
     
     // Remove other markers
-    for (let i = 0; i < markers_sorted_by_bounding_box_area.length; i++) {
-        if (i != selectedMetadata && map.hasLayer(markers_sorted_by_bounding_box_area[i])) {
-            map.removeLayer(markers_sorted_by_bounding_box_area[i]);
+    for (let i = 0; i < markers.length; i++) {
+        if (i != selectedMetadata && map.hasLayer(markers[i])) {
+            map.removeLayer(markers[i]);
             $('#showBounds-' + i).show();
             $('#hideBounds-' + i).hide();
         }
     }
     
-    if (markers_sorted_by_bounding_box_area[selectedMetadata].getCenter) {
-        map.flyToBounds(markers_sorted_by_bounding_box_area[selectedMetadata].getBounds().pad(Math.sqrt(2) / 2), {animate: true, duration: 0.5});  // Polygon
+    if (markers[selectedMetadata].getCenter) {
+        map.flyToBounds(markers[selectedMetadata].getBounds().pad(Math.sqrt(2) / 2), {animate: true, duration: 0.5});  // Polygon
     } else {
-        map.panTo(markers_sorted_by_bounding_box_area[selectedMetadata].getLatLng());  // Marker
+        map.panTo(markers[selectedMetadata].getLatLng());  // Marker
     }
     
 }
@@ -278,9 +237,9 @@ function closeMetadata() {
         $('#dataset-' + currentMetadata).removeClass('border-primary');
         
         // Add back markers
-        for (let i = 0; i < markers_sorted_by_bounding_box_area.length; i++) {
-            if (i != currentMetadata && !map.hasLayer(markers_sorted_by_bounding_box_area[i])) {
-                map.addLayer(markers_sorted_by_bounding_box_area[i]);                
+        for (let i = 0; i < markers.length; i++) {
+            if (i != currentMetadata && !map.hasLayer(markers[i])) {
+                map.addLayer(markers[i]);                
                 $('#showBounds-' + i).hide();
                 $('#hideBounds-' + i).show();
             }
