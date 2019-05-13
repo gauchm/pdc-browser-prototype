@@ -131,9 +131,12 @@ for (let i = 0; i < datasets.length; i++) {
     } else {
 
         button_div =   '<div class="m-2">' +
-                                `<button id="hideBounds-${i}" class="btn btn-link" style="z-index: 2000;">` +
+                                `<button id="showBounds-${i}" class="btn btn-link" style="display: none; z-index: 2000;">` +
                                     `<i class="material-icons"> language </i>` +
                                 `</button>` +
+                                `<button id="hideBounds-${i}" class="btn btn-link" style="z-index: 2000;">` +
+                                    `<i class="material-icons"> language </i>` +
+                                `</button>`
                             '</div>'
 
     }
