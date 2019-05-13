@@ -3,6 +3,9 @@ var map = L.map('mapid').setView([53, -95], 3.5);
 var currentMetadata = null;
 var markers = [];
 
+const GLOBAL_MARKER_TYPE = "G";
+const LOCAL_MARKER_TYPE = "L";
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     continuousWorld: true
@@ -79,12 +82,20 @@ for (let i = 0; i < datasets.length; i++) {
     var datasetId = dataset["gmd:MD_Metadata"]["gmd:fileIdentifier"]["gco:CharacterString"];
     
     var marker = null;
+    var markerType = null;
+    var markerSelectedIcon = null;
+    var markerDeselectedIcon = null;
+
     var bounding_box = getBoundingBox(dataset);
+
     if (bounding_box.length == 2) {
+
         marker = L.marker(bounding_box).addTo(map);
-    } else {
-        
-        // Calculate the area of the bounding box.
+
+        markerType = LOCAL_MARKER_TYPE;
+
+    } 
+    else {
 
         let bounding_box_length = null;
         let bounding_box_height = null;
@@ -101,53 +112,53 @@ for (let i = 0; i < datasets.length; i++) {
         }
 
         let bounding_box_area = bounding_box_length * bounding_box_height;
-
         if (bounding_box_area / MAX_BOUNDING_BOX_AREA < 1) {
+
             marker = L.polygon(bounding_box).addTo(map);
+
+            markerType = LOCAL_MARKER_TYPE;
+
+        }
+        else {
+
+            marker = L.polygon(bounding_box);
+
+            markerType = GLOBAL_MARKER_TYPE;
+
         }
 
     }
 
-    var button_div = null;
-    if (marker !== null) {
-        
-        marker.on('click', function(e) {
-            toggleMetadata(i, true);
-            window.location.hash = "#" + datasets[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"];
-        });
-        markers.push(marker);
-
-        let m = markers.length - 1;
+    marker.on('click', function(e) {
+        toggleMetadata(i, true);
+        window.location.hash = "#" + datasets[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"];
+    });
     
-        button_div =   '<div class="m-2">' +
-                                `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${m});" style="display: none; z-index: 2000;">` +
-                                    `<i class="material-icons"> location_on </i>` +
-                                `</button>` +
-                                `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${m});" style="z-index: 2000;">` +
-                                    `<i class="material-icons"> location_off </i>` +
-                                `</button>` +
-                            '</div>'
-    
-    } else {
+    markers.push([marker, markerType]);
 
-        button_div =   '<div class="m-2">' +
-                                `<button id="showBounds-${i}" class="btn btn-link" style="display: none; z-index: 2000;">` +
-                                    `<i class="material-icons"> language </i>` +
-                                `</button>` +
-                                `<button id="hideBounds-${i}" class="btn btn-link" style="z-index: 2000;">` +
-                                    `<i class="material-icons"> language </i>` +
-                                `</button>`
-                            '</div>'
-
+    if (markerType == LOCAL_MARKER_TYPE) {
+        markerSelectedIcon = "location_on";
+        markerDeselectedIcon = "location_off";
     }
-                        
+    else if (markerType == GLOBAL_MARKER_TYPE) {
+        markerSelectedIcon = "language";
+        markerDeselectedIcon = markerSelectedIcon;
+    }
+
     var card =  `<div id="${datasetId}">` +
                     `<div class="card" id="dataset-${i}">` +
                         `<div class="row card-header m-0 p-0" id="heading-${i}" >` +
                             `<a href="#${datasetId}" class="h6 col m-0 p-3 collapsed text-left stretched-link" data-target="#collapse-${i}" aria-expanded="false" aria-controls="collapse-${i}" onclick="toggleMetadata(${i}, false);" style="text-decoration: none">` +
                                 `${title}` + 
                             '</a>' +
-                            button_div + 
+                            '<div class="m-2">' +
+                                `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="display: none; z-index: 2000;">` +
+                                    `<i class="material-icons"> ${markerSelectedIcon} </i>` +
+                                `</button>` +
+                                `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="z-index: 2000;">` +
+                                    `<i class="material-icons"> ${markerDeselectedIcon} </i>` +
+                                `</button>` +
+                            '</div>'
                         '</div>' +
                         `<div id="collapse-${i}" class="collapse" aria-labelledby="heading-${i}" data-parent="#datasetList">` +
                           '<div class="card-body">' +
@@ -161,39 +172,64 @@ for (let i = 0; i < datasets.length; i++) {
 }
 
 function allBoundsOff() {
+
     for (let i = 0; i < markers.length; i++) { 
-        if (map.hasLayer(markers[i])) {
-            map.removeLayer(markers[i]);
+
+        if (markers[i][1] == LOCAL_MARKER_TYPE &&
+            map.hasLayer(markers[i][0])) {
+
+            map.removeLayer(markers[i][0]);
             $('#showBounds-' + i).show();
             $('#hideBounds-' + i).hide();
+
         }
+
     }
 }
 
 function allBoundsOn() {
+
     for (let i = 0; i < markers.length; i++) { 
-        if (!map.hasLayer(markers[i])) {
-            map.addLayer(markers[i]);
+
+        if (markers[i][1] == LOCAL_MARKER_TYPE &&
+            !map.hasLayer(markers[i][0])) {
+
+            map.addLayer(markers[i][0]);
             $('#showBounds-' + i).hide();
             $('#hideBounds-' + i).show();
+
         }
+
     }
+
 }
 
 function toggleBounds(i) {
-    if (map.hasLayer(markers[i])) {
-        map.removeLayer(markers[i]);
-        $('#showBounds-' + i).show();
-        $('#hideBounds-' + i).hide();
-    } else {
-        map.addLayer(markers[i]);
-        $('#showBounds-' + i).hide();
-        $('#hideBounds-' + i).show();
+
+    if (markers[i][1] == LOCAL_MARKER_TYPE) {
+
+        if (map.hasLayer(markers[i][0])) {
+
+            map.removeLayer(markers[i][0]);
+            $('#showBounds-' + i).show();
+            $('#hideBounds-' + i).hide();
+    
+        } 
+        else {
+    
+            map.addLayer(markers[i][0]);
+            $('#showBounds-' + i).hide();
+            $('#hideBounds-' + i).show();
+    
+        }
+
     }
     
 }
 
+
 function toggleMetadata(selectedMetadata, scroll_to) {
+
     if (selectedMetadata == currentMetadata) {
         closeMetadata();
         return;
@@ -218,17 +254,23 @@ function toggleMetadata(selectedMetadata, scroll_to) {
     
     // Remove other markers
     for (let i = 0; i < markers.length; i++) {
-        if (i != selectedMetadata && map.hasLayer(markers[i])) {
-            map.removeLayer(markers[i]);
+
+        if (i != selectedMetadata &&
+            markers[i][1] == LOCAL_MARKER_TYPE &&
+            map.hasLayer(markers[i][0])) {
+
+            map.removeLayer(markers[i][0]);
             $('#showBounds-' + i).show();
             $('#hideBounds-' + i).hide();
+
         }
+
     }
     
-    if (markers[selectedMetadata].getCenter) {
-        map.flyToBounds(markers[selectedMetadata].getBounds().pad(Math.sqrt(2) / 2), {animate: true, duration: 0.5});  // Polygon
+    if (markers[selectedMetadata][0].getCenter) {
+        map.flyToBounds(markers[selectedMetadata][0].getBounds().pad(Math.sqrt(2) / 2), {animate: true, duration: 0.5});  // Polygon
     } else {
-        map.panTo(markers[selectedMetadata].getLatLng());  // Marker
+        map.panTo(markers[selectedMetadata][0].getLatLng());  // Marker
     }
     
 }
@@ -241,11 +283,17 @@ function closeMetadata() {
         
         // Add back markers
         for (let i = 0; i < markers.length; i++) {
-            if (i != currentMetadata && !map.hasLayer(markers[i])) {
-                map.addLayer(markers[i]);                
+
+            if (i != currentMetadata &&
+                markers[i][1] == LOCAL_MARKER_TYPE &&
+                !map.hasLayer(markers[i][0])) {
+
+                map.addLayer(markers[i][0]);                
                 $('#showBounds-' + i).hide();
                 $('#hideBounds-' + i).show();
+
             }
+
         }
         currentMetadata = null;
     }
