@@ -3,6 +3,9 @@ var map = L.map('mapid').setView([53, -95], 3.5);
 var currentMetadata = null;
 var markers = [];
 
+const GLOBAL_MARKER_TYPE = "G";
+const LOCAL_MARKER_TYPE = "L";
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     continuousWorld: true
@@ -61,8 +64,6 @@ function hashChanged() {
     let target = window.location.hash.substr(1);
     if (target !== "") {
         for (let i = 0; i < datasets.length; i++) {
-            //let marker_size_and_index_pair = marker_size_and_index_pairs[i];
-            //let marker_index = marker_size_and_index_pair[1];
             if (datasets[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"] === target && currentMetadata != i) {
                 toggleMetadata(i, true);
             }
@@ -73,8 +74,8 @@ window.addEventListener("hashchange", hashChanged, false);
 $(document).ready(hashChanged);
 
 const MAX_BOUNDING_BOX_AREA = 64800; // This is the area of the entire map.
+var bounding_box_area_and_marker_index_pairs = [];
 
-var marker_size_and_index_pairs = []
 for (let i = 0; i < datasets.length; i++) { 
     
     var dataset = datasets[i];
@@ -82,14 +83,23 @@ for (let i = 0; i < datasets.length; i++) {
     var datasetId = dataset["gmd:MD_Metadata"]["gmd:fileIdentifier"]["gco:CharacterString"];
     
     var marker = null;
+    var markerType = null;
+    var markerSelectedIcon = null;
+    var markerDeselectedIcon = null;
+    var markerIconClickable = null;
+
     var bounding_box = getBoundingBox(dataset);
-    var bounding_box_area = 0;
 
     if (bounding_box.length == 2) {
-        marker = L.marker(bounding_box)
-    } else {
-        
-        // Calculate the area of the bounding box.
+
+        marker = L.marker(bounding_box);
+
+        markerType = LOCAL_MARKER_TYPE;
+
+        bounding_box_area_and_marker_index_pairs.push([0, i]);
+
+    } 
+    else {
 
         let bounding_box_length = null;
         let bounding_box_height = null;
@@ -105,48 +115,58 @@ for (let i = 0; i < datasets.length; i++) {
             }
         }
 
-        bounding_box_area = bounding_box_length * bounding_box_height;
-
+        let bounding_box_area = bounding_box_length * bounding_box_height;
         if (bounding_box_area / MAX_BOUNDING_BOX_AREA < 1) {
-            marker = L.polygon(bounding_box)
+
+            marker = L.polygon(bounding_box);
+
+            markerType = LOCAL_MARKER_TYPE;
+
+        }
+        else {
+
+            marker = L.polygon(bounding_box);
+
+            markerType = GLOBAL_MARKER_TYPE;
+
         }
 
-    }
-
-    var button_div = null;
-    if (marker !== null) {
-        
-        let markers_length = markers.length;
-
-        markers.push(marker);
-        marker_size_and_index_pairs.push([bounding_box_area, markers_length]);
-    
-        button_div =   '<div class="m-2">' +
-                                `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${markers_length});" style="display: none; z-index: 2000;">` +
-                                    `<i class="material-icons"> location_on </i>` +
-                                `</button>` +
-                                `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${markers_length});" style="z-index: 2000;">` +
-                                    `<i class="material-icons"> location_off </i>` +
-                                `</button>` +
-                            '</div>'
-    
-    } else {
-
-        button_div =   '<div class="m-2">' +
-                                `<button id="hideBounds-${i}" class="btn btn-link" style="z-index: 2000;">` +
-                                    `<i class="material-icons"> language </i>` +
-                                `</button>` +
-                            '</div>'
+        bounding_box_area_and_marker_index_pairs.push([bounding_box_area, i]);
 
     }
-                        
+
+    marker.on('click', function(e) {
+        toggleMetadata(i, true);
+        window.location.hash = "#" + datasets[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"];
+    });
+    
+    markers.push([marker, markerType]);
+
+    if (markerType == LOCAL_MARKER_TYPE) {
+        markerSelectedIcon = "location_on";
+        markerDeselectedIcon = "location_off";
+        markerIconClickable = true;
+    }
+    else if (markerType == GLOBAL_MARKER_TYPE) {
+        markerSelectedIcon = "language";
+        markerDeselectedIcon = markerSelectedIcon;
+        markerIconClickable = false;
+    }
+
     var card =  `<div id="${datasetId}">` +
                     `<div class="card" id="dataset-${i}">` +
                         `<div class="row card-header m-0 p-0" id="heading-${i}" >` +
                             `<a href="#${datasetId}" class="h6 col m-0 p-3 collapsed text-left stretched-link" data-target="#collapse-${i}" aria-expanded="false" aria-controls="collapse-${i}" onclick="toggleMetadata(${i}, false);" style="text-decoration: none">` +
                                 `${title}` + 
                             '</a>' +
-                            button_div + 
+                            '<div class="m-2">' +
+                                `<button id="showBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="display: none; z-index: 2000;">` +
+                                    `<i class="material-icons"> ${markerSelectedIcon} </i>` +
+                                `</button>` +
+                                `<button id="hideBounds-${i}" class="btn btn-link" onclick="toggleBounds(${i});" style="z-index: 2000;">` +
+                                    `<i class="material-icons"> ${markerDeselectedIcon} </i>` +
+                                `</button>` +
+                            '</div>' +
                         '</div>' +
                         `<div id="collapse-${i}" class="collapse" aria-labelledby="heading-${i}" data-parent="#datasetList">` +
                           '<div class="card-body">' +
@@ -156,11 +176,25 @@ for (let i = 0; i < datasets.length; i++) {
                     '</div>' +
                 '</div>';
     $(card).appendTo('#datasetList');
+
+    if (markerType == GLOBAL_MARKER_TYPE) {
+        $(`#hideBounds-${i}`).attr("title", "Global Dataset");
+        $(`#showBounds-${i}`).attr("title", 'Global Dataset');
+    }
+    else if (markerType == LOCAL_MARKER_TYPE) {
+        $(`#hideBounds-${i}`).attr("title", "Hide Region");
+        $(`#showBounds-${i}`).attr("title", 'Show Region');
+    }
+
+    if (!markerIconClickable) {
+        $(`#hideBounds-${i}`).attr("disabled", true);
+        $(`#showBounds-${i}`).attr("disabled", true);   
+    } 
+
     $('#datasetList #metadataTable-' + i).load('datasetMetadata.html', function() { populateMetadataTable(i); });
-    
 }
 
-marker_size_and_index_pairs.sort(function(a, b) {
+bounding_box_area_and_marker_index_pairs.sort(function(a, b) {
 
     if (a[0] < b[0]) {
         return +1;
@@ -174,65 +208,82 @@ marker_size_and_index_pairs.sort(function(a, b) {
 
 });
 
-var markers_sorted_by_bounding_box_area = Array(markers.length);
-var datasets_sorted_by_bounding_box_area = Array(markers.length);
-for (let i = 0; i < markers.length; i ++) {
-
-    let marker_size_and_index_pair = marker_size_and_index_pairs[i];
-    let marker_index = marker_size_and_index_pair[1];
-
-    markers_sorted_by_bounding_box_area[i] = markers[marker_index];
-    datasets_sorted_by_bounding_box_area[i] = datasets[marker_index];
-
-    markers_sorted_by_bounding_box_area[i].on('click', function(e) {
-        toggleMetadata(marker_index, true);
-        window.location.hash = "#" + datasets_sorted_by_bounding_box_area[i]["gmd:MD_Metadata"]["gmd:fileIdentifier"];
-    });
-    
-}
-
 allBoundsOn();
 
+
 function allBoundsOff() {
-    for (let i = 0; i < markers_sorted_by_bounding_box_area.length; i++) { 
-        if (map.hasLayer(markers_sorted_by_bounding_box_area[i])) {
-            map.removeLayer(markers_sorted_by_bounding_box_area[i]);
+
+    for (let i = 0; i < markers.length; i++) { 
+
+        if (markers[i][1] == LOCAL_MARKER_TYPE &&
+            map.hasLayer(markers[i][0])) {
+
+            map.removeLayer(markers[i][0]);
             $('#showBounds-' + i).show();
             $('#hideBounds-' + i).hide();
+
         }
+
     }
 }
 
 function allBoundsOn() {
-    for (let i = 0; i <  markers_sorted_by_bounding_box_area.length; i++) { 
-        map.addLayer(markers_sorted_by_bounding_box_area[i]);
-        $('#showBounds-' + i).hide();
-        $('#hideBounds-' + i).show();
+
+    for (let j = 0; j < bounding_box_area_and_marker_index_pairs.length; j++) { 
+
+        let bounding_box_area_and_marker_index = bounding_box_area_and_marker_index_pairs[j];
+        let i = bounding_box_area_and_marker_index[1];
+
+        if (markers[i][1] == LOCAL_MARKER_TYPE &&
+            !map.hasLayer(markers[i][0])) {
+
+            map.addLayer(markers[i][0]);
+            $('#showBounds-' + i).hide();
+            $('#hideBounds-' + i).show();
+
+        }
+
     }
+
 }
 
 function toggleBounds(i) {
 
-    if (map.hasLayer(markers_sorted_by_bounding_box_area[i])) {
-        map.removeLayer(markers_sorted_by_bounding_box_area[i]);
-        $('#showBounds-' + i).show();
-        $('#hideBounds-' + i).hide();
-    } else {
-        for (let j = 0; j < markers_sorted_by_bounding_box_area.length; j ++) {
-            if (j == i || map.hasLayer(markers_sorted_by_bounding_box_area[j])) {
-                map.removeLayer(markers_sorted_by_bounding_box_area[j]);
-                map.addLayer(markers_sorted_by_bounding_box_area[j]);
-                $('#showBounds-' + j).hide();
-                $('#hideBounds-' + j).show();
+    if (markers[i][1] == LOCAL_MARKER_TYPE) {
+
+        if (map.hasLayer(markers[i][0])) {
+
+            map.removeLayer(markers[i][0]);
+            $('#showBounds-' + i).show();
+            $('#hideBounds-' + i).hide();
+    
+        } 
+        else {
+    
+            for (let j = 0; j < bounding_box_area_and_marker_index_pairs.length; j ++) {
+
+                let bounding_box_area_and_marker_index = bounding_box_area_and_marker_index_pairs[j];
+                let k = bounding_box_area_and_marker_index[1];
+
+                if (k == i || map.hasLayer(markers[k][0])) {
+
+                    map.removeLayer(markers[k][0]);
+                    map.addLayer(markers[k][0]);
+                    $('#showBounds-' + k).hide();
+                    $('#hideBounds-' + k).show();
+
+                }
+
             }
+
         }
+
     }
     
 }
 
-function toggleMetadata(selectedMetadata, scroll_to) {
 
-    // use selectedMetadata to get the index in the sorted arrays.
+function toggleMetadata(selectedMetadata, scroll_to) {
 
     if (selectedMetadata == currentMetadata) {
         closeMetadata();
@@ -244,7 +295,7 @@ function toggleMetadata(selectedMetadata, scroll_to) {
     
     // Open selected accordion card
     $('#collapse-' + selectedMetadata).removeClass('collapse');
-   
+
     // Scroll to card in dataset list
     if (scroll_to) {
         var target = $('#dataset-' + selectedMetadata);
@@ -258,40 +309,56 @@ function toggleMetadata(selectedMetadata, scroll_to) {
     
     // Remove other markers
     for (let i = 0; i < markers.length; i++) {
-        if (i != selectedMetadata && map.hasLayer(markers[i])) {
-            map.removeLayer(markers[i]);
+
+        if (i != selectedMetadata &&
+            markers[i][1] == LOCAL_MARKER_TYPE &&
+            map.hasLayer(markers[i][0])) {
+
+            map.removeLayer(markers[i][0]);
             $('#showBounds-' + i).show();
             $('#hideBounds-' + i).hide();
+
         }
+
     }
     
-    if (markers[selectedMetadata].getCenter) {
-        map.flyToBounds(markers[selectedMetadata].getBounds().pad(Math.sqrt(2) / 2), {animate: true, duration: 0.5});  // Polygon
+    if (markers[selectedMetadata][0].getCenter) {
+        map.flyToBounds(markers[selectedMetadata][0].getBounds().pad(Math.sqrt(2) / 2), {animate: true, duration: 0.5});  // Polygon
     } else {
-        map.panTo(markers[selectedMetadata].getLatLng());  // Marker
+        map.panTo(markers[selectedMetadata][0].getLatLng());  // Marker
     }
     
 }
 
 function closeMetadata() {
+
     if (currentMetadata != null) {
+
         // Collapse card in dataset list and remove highlighting
         $('#collapse-' + currentMetadata).addClass('collapse');
         $('#dataset-' + currentMetadata).removeClass('border-primary');
         
         // Add back markers
-        for (let i = 0; i < markers_sorted_by_bounding_box_area.length; i++) {
-            
-            map.removeLayer(markers_sorted_by_bounding_box_area[i]);
-            map.addLayer(markers_sorted_by_bounding_box_area[i]);              
-            $('#showBounds-' + i).hide();
-            $('#hideBounds-' + i).show();
-            
+        for (let j = 0; j < bounding_box_area_and_marker_index_pairs.length; j++) {
+
+            let bounding_box_area_and_marker_index = bounding_box_area_and_marker_index_pairs[j];
+            let i = bounding_box_area_and_marker_index[1];
+
+            if (markers[i][1] == LOCAL_MARKER_TYPE) {
+
+                map.removeLayer(markers[i][0]);
+                map.addLayer(markers[i][0]);                
+                $('#showBounds-' + i).hide();
+                $('#hideBounds-' + i).show();
+
+            }
+
         }
 
         currentMetadata = null;
 
     }
+
 }
 
 function getTitle(dataset) {
@@ -334,17 +401,17 @@ function populateMetadataTable(i){
     var charset = metadata["gmd:characterSet"]["gmd:MD_CharacterSetCode"];
     var hierarchyLevel = metadata["gmd:hierarchyLevel"]["gmd:MD_ScopeCode"];
     
-    var contact_person = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:individualName"];
-    var contact_org = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:organisationName"];
-    var address = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:deliveryPoint"];
-    var city = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:city"];
-    var province = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:administrativeArea"];
-    var postalCode = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:postalCode"];
-    var country = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:country"];
-    var email = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:electronicMailAddress"];
-    var phone = metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:phone"]["gmd:CI_Telephone"]["gmd:voice"];
-    var website = metadata["gmd:identificationInfo"]["gmd:MD_DataIdentification"]["gmd:pointOfContact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:onlineResource"]["gmd:CI_OnlineResource"]["gmd:linkage"]["gmd:URL"];
-    var role = formatRole(metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:role"]["gmd:CI_RoleCode"]);
+    var contact_person = "UW GWF Data Manager"; //metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:individualName"];
+    var contact_org = "Global Water Futures, University of Waterloo"; //metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:organisationName"];
+    var address = "200 University Ave W"; //metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:deliveryPoint"];
+    var city = "Waterloo"; //metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:city"];
+    var province = "ON"; //metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:administrativeArea"];
+    var postalCode = "N2L 3G1"; //metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:postalCode"];
+    var country = "Canada"; //metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:country"];
+    var email = "gwf-uw@uwaterloo.ca"; //metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:address"]["gmd:CI_Address"]["gmd:electronicMailAddress"];
+    var phone = "5198884567 ext 31327"; //metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:phone"]["gmd:CI_Telephone"]["gmd:voice"];
+    var website = "https://uwaterloo.ca/global-water-futures/"; //metadata["gmd:identificationInfo"]["gmd:MD_DataIdentification"]["gmd:pointOfContact"]["gmd:CI_ResponsibleParty"]["gmd:contactInfo"]["gmd:CI_Contact"]["gmd:onlineResource"]["gmd:CI_OnlineResource"]["gmd:linkage"]["gmd:URL"];
+    var role = "Point Of Contact"; //formatRole(metadata["gmd:contact"]["gmd:CI_ResponsibleParty"]["gmd:role"]["gmd:CI_RoleCode"]);
     var dateStamp = metadata["gmd:dateStamp"];
     var standardName = metadata["gmd:metadataStandardName"];
     var standardVersion = metadata["gmd:metadataStandardVersion"];
@@ -400,12 +467,12 @@ function populateMetadataTable(i){
     $(metadataTable + ' #meta-country').html(country);
     $(metadataTable + ' #meta-email').html("<a href='mailto:" + email + "'>" + email + "</a>");
     $(metadataTable + ' #meta-phone').html(phone);
-    $(metadataTable + ' #meta-website').html("<a href='" + website + "'>" + website + "</a>");
+    $(metadataTable + ' #meta-website').html("<a href='" + website + "' target='_blank' rel='noopener noreferrer'>" + website + "</a>");
     $(metadataTable + ' #meta-role').html(role);
     $(metadataTable + ' #meta-dateStamp').html(dateStamp);
     $(metadataTable + ' #meta-standardName').html(standardName);
     $(metadataTable + ' #meta-standardVersion').html(standardVersion);
-    $(metadataTable + ' #meta-datasetURI').html("<a href='" + datasetURI + "'>" + datasetURI + "</a>");
+    $(metadataTable + ' #meta-datasetURI').html("<a href='" + datasetURI + "' target='_blank' rel='noopener noreferrer'>" + datasetURI + "</a>");
     
     var responsiblePartiesString = "";
     for (let i = 0; i < responsibleParties.length; i++) {
@@ -441,7 +508,7 @@ function populateMetadataTable(i){
     var urlExpr = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
     var urlRegex = new RegExp(urlExpr).exec(thesaurusName);
     if (urlRegex != null) {
-      thesaurusName = thesaurusName.replace(urlRegex[0], `<a href="${urlRegex[0]}">${urlRegex[0]}</a>`);
+      thesaurusName = thesaurusName.replace(urlRegex[0], `<a href="${urlRegex[0]}" target="_blank" rel="noopener noreferrer">${urlRegex[0]}</a>`);
     }
     $(metadataTable + ' #meta-thesaurusName').html(thesaurusName);
     
