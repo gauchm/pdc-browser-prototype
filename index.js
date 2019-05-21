@@ -74,6 +74,7 @@ window.addEventListener("hashchange", hashChanged, false);
 $(document).ready(hashChanged);
 
 const MAX_BOUNDING_BOX_AREA = 64800; // This is the area of the entire map.
+var bounding_box_area_and_marker_index_pairs = [];
 
 for (let i = 0; i < datasets.length; i++) { 
     
@@ -91,9 +92,11 @@ for (let i = 0; i < datasets.length; i++) {
 
     if (bounding_box.length == 2) {
 
-        marker = L.marker(bounding_box).addTo(map);
+        marker = L.marker(bounding_box);
 
         markerType = LOCAL_MARKER_TYPE;
+
+        bounding_box_area_and_marker_index_pairs.push([0, i]);
 
     } 
     else {
@@ -115,7 +118,7 @@ for (let i = 0; i < datasets.length; i++) {
         let bounding_box_area = bounding_box_length * bounding_box_height;
         if (bounding_box_area / MAX_BOUNDING_BOX_AREA < 1) {
 
-            marker = L.polygon(bounding_box).addTo(map);
+            marker = L.polygon(bounding_box);
 
             markerType = LOCAL_MARKER_TYPE;
 
@@ -127,6 +130,8 @@ for (let i = 0; i < datasets.length; i++) {
             markerType = GLOBAL_MARKER_TYPE;
 
         }
+
+        bounding_box_area_and_marker_index_pairs.push([bounding_box_area, i]);
 
     }
 
@@ -189,6 +194,23 @@ for (let i = 0; i < datasets.length; i++) {
     $('#datasetList #metadataTable-' + i).load('datasetMetadata.html', function() { populateMetadataTable(i); });
 }
 
+bounding_box_area_and_marker_index_pairs.sort(function(a, b) {
+
+    if (a[0] < b[0]) {
+        return +1;
+    }
+    else if (a[0] > b[0]) {
+        return -1;
+    }
+    else {
+        return 0;
+    }
+
+});
+
+allBoundsOn();
+
+
 function allBoundsOff() {
 
     for (let i = 0; i < markers.length; i++) { 
@@ -207,7 +229,10 @@ function allBoundsOff() {
 
 function allBoundsOn() {
 
-    for (let i = 0; i < markers.length; i++) { 
+    for (let j = 0; j < bounding_box_area_and_marker_index_pairs.length; j++) { 
+
+        let bounding_box_area_and_marker_index = bounding_box_area_and_marker_index_pairs[j];
+        let i = bounding_box_area_and_marker_index[1];
 
         if (markers[i][1] == LOCAL_MARKER_TYPE &&
             !map.hasLayer(markers[i][0])) {
@@ -235,10 +260,22 @@ function toggleBounds(i) {
         } 
         else {
     
-            map.addLayer(markers[i][0]);
-            $('#showBounds-' + i).hide();
-            $('#hideBounds-' + i).show();
-    
+            for (let j = 0; j < bounding_box_area_and_marker_index_pairs.length; j ++) {
+
+                let bounding_box_area_and_marker_index = bounding_box_area_and_marker_index_pairs[j];
+                let k = bounding_box_area_and_marker_index[1];
+
+                if (k == i || map.hasLayer(markers[k][0])) {
+
+                    map.removeLayer(markers[k][0]);
+                    map.addLayer(markers[k][0]);
+                    $('#showBounds-' + k).hide();
+                    $('#hideBounds-' + k).show();
+
+                }
+
+            }
+
         }
 
     }
@@ -258,9 +295,6 @@ function toggleMetadata(selectedMetadata, scroll_to) {
     
     // Open selected accordion card
     $('#collapse-' + selectedMetadata).removeClass('collapse');
-   
-    console.log(selectedMetadata);
-    console.log($('#collapse-' + selectedMetadata).hasClass('collapse'));
 
     // Scroll to card in dataset list
     if (scroll_to) {
@@ -297,18 +331,22 @@ function toggleMetadata(selectedMetadata, scroll_to) {
 }
 
 function closeMetadata() {
+
     if (currentMetadata != null) {
+
         // Collapse card in dataset list and remove highlighting
         $('#collapse-' + currentMetadata).addClass('collapse');
         $('#dataset-' + currentMetadata).removeClass('border-primary');
         
         // Add back markers
-        for (let i = 0; i < markers.length; i++) {
+        for (let j = 0; j < bounding_box_area_and_marker_index_pairs.length; j++) {
 
-            if (i != currentMetadata &&
-                markers[i][1] == LOCAL_MARKER_TYPE &&
-                !map.hasLayer(markers[i][0])) {
+            let bounding_box_area_and_marker_index = bounding_box_area_and_marker_index_pairs[j];
+            let i = bounding_box_area_and_marker_index[1];
 
+            if (markers[i][1] == LOCAL_MARKER_TYPE) {
+
+                map.removeLayer(markers[i][0]);
                 map.addLayer(markers[i][0]);                
                 $('#showBounds-' + i).hide();
                 $('#hideBounds-' + i).show();
@@ -316,8 +354,11 @@ function closeMetadata() {
             }
 
         }
+
         currentMetadata = null;
+
     }
+
 }
 
 function getTitle(dataset) {
